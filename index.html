@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Application quiz saisonniers — Somme Tourisme</title>
+<style>
+:root {
+  --bg:#f6f4ee; --card:#ffffff; --ink:#24312f; --muted:#65716f;
+  --green:#2f7d67; --green-dark:#205948; --blue:#497c91;
+  --ok:#1f8a5b; --bad:#c94c4c; --line:#e5e0d5; --soft:#edf5f1;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{padding:30px 18px;background:linear-gradient(135deg,var(--green),#82b4a0 55%,#88b2c2);color:white;text-align:center}
+header h1{margin:0 0 8px;font-size:clamp(1.55rem,4vw,2.6rem)}
+header p{margin:0 auto;max-width:920px;opacity:.96}
+main{max-width:1040px;margin:0 auto;padding:22px 16px 56px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 8px 22px rgba(36,49,47,.08);margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+label.field span{display:block;font-weight:800;margin-bottom:6px}
+input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:1rem}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:var(--soft);color:var(--green-dark);font-weight:800;font-size:.92rem}
+button{border:0;border-radius:999px;padding:12px 17px;font-weight:800;cursor:pointer;background:var(--green);color:white;font-size:.97rem}
+button:hover{background:var(--green-dark)}
+button.secondary{background:#ebe7dc;color:var(--ink)}
+button.secondary:hover{background:#ded7c8}
+button:disabled{opacity:.45;cursor:not-allowed}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.progress-wrap{height:11px;background:#e8e3d8;border-radius:999px;overflow:hidden;margin:10px 0}
+.progress{height:100%;width:0;background:var(--green);transition:width .2s ease}
+.small{color:var(--muted);font-size:.92rem}
+.theme{font-weight:900;color:var(--green-dark);margin-bottom:8px}
+.question-title{font-size:1.25rem;font-weight:900;margin-bottom:16px}
+.answers{display:grid;gap:10px}
+.answer{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);padding:13px;border-radius:14px;background:white;cursor:pointer}
+.answer:hover{border-color:#b9cfc5}
+.answer input{margin-top:5px}
+.feedback{display:none;margin-top:16px;padding:14px;border-radius:14px;font-weight:700}
+.feedback.ok{display:block;background:#eaf7f0;color:var(--ok)}
+.feedback.bad{display:block;background:#fff0f0;color:var(--bad)}
+.feedback .why{display:block;margin-top:8px;color:var(--ink);font-weight:500}
+.result{display:none;text-align:center}
+.score{font-size:clamp(2rem,6vw,4.2rem);font-weight:950;color:var(--green-dark);margin:12px 0}
+.passed{color:var(--ok);font-weight:950}
+.failed{color:var(--bad);font-weight:950}
+.review{display:grid;gap:12px;margin-top:20px;text-align:left}
+.review-item{border-left:5px solid var(--line);padding:13px;background:#fbfaf6;border-radius:12px}
+.review-item.ok{border-left-color:var(--ok)}
+.review-item.bad{border-left-color:var(--bad)}
+.hidden{display:none!important}
+.certificate{display:none;margin-top:20px;border:3px solid var(--green);border-radius:22px;padding:28px;background:#fff;text-align:center}
+.certificate h2{font-size:2rem;margin:0 0 8px;color:var(--green-dark)}
+.certificate .name{font-size:1.5rem;font-weight:950;margin:14px 0}
+.notice{background:#fff8e6;border-left:5px solid #d99c2b;padding:12px;border-radius:10px;margin-top:12px}
+@media print {
+  body{background:white}
+  header,.no-print,.card:not(.certificate),#quizScreen,#resultActions,#review{display:none!important}
+  .certificate{display:block!important;box-shadow:none;border:3px solid #2f7d67;margin-top:40px}
+  main{max-width:100%;padding:0}
+}
+</style>
+</head>
+<body>
+<header class="no-print">
+  <h1>Quiz d’intégration — Accueil et conseil aux visiteurs</h1>
+  <p>Application autonome pour former et évaluer les saisonniers des Offices de Tourisme de la Somme.</p>
+</header>
+
+<main>
+  <section id="homeScreen" class="card">
+    <h2>Bienvenue</h2>
+    <p>Ce quiz permet de vérifier les connaissances sur les bonnes pratiques d’accueil, les réglementations, les questions fréquentes des voyageurs et les bons réflexes face aux informations issues de l’IA ou des réseaux sociaux.</p>
+    <div class="meta">
+      <span class="pill">Banque : 66 questions</span>
+      <span class="pill">Tirage : 40 questions</span>
+      <span class="pill">Validation : 75 %</span>
+      <span class="pill">Objectif : 30/40</span>
+    </div>
+    <div class="grid">
+      <label class="field"><span>Nom et prénom</span><input type="text" id="traineeName" placeholder="Ex. Camille Dupont"></label>
+      <label class="field"><span>Office / Structure</span><input type="text" id="traineeOrg" placeholder="Ex. OT Baie de Somme"></label>
+    </div>
+    <div class="notice"><strong>Principe :</strong> en cas d’échec, une nouvelle tentative proposera une autre sélection de 40 questions tirées au hasard.</div>
+    <div class="controls">
+      <button id="beginBtn">Commencer le quiz</button>
+    </div>
+  </section>
+
+  <section id="quizScreen" class="card hidden">
+    <div class="meta">
+      <span class="pill" id="candidatePill"></span>
+      <span class="pill" id="orgPill"></span>
+    </div>
+    <div class="progress-wrap"><div class="progress" id="progress"></div></div>
+    <div class="small" id="counter">Question 1 / 40</div>
+    <div class="theme" id="theme"></div>
+    <div class="question-title" id="question"></div>
+    <div class="answers" id="answers"></div>
+    <div id="feedback" class="feedback"></div>
+    <div class="controls">
+      <button id="validateBtn">Valider la réponse</button>
+      <button id="nextBtn" disabled>Question suivante</button>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="card result">
+    <h2>Résultat final</h2>
+    <div class="score" id="score"></div>
+    <div id="message"></div>
+    <div id="resultActions" class="controls" style="justify-content:center">
+      <button id="reviewBtn" class="secondary">Voir le corrigé complet</button>
+      <button id="csvBtn" class="secondary">Exporter les résultats CSV</button>
+      <button id="printBtn">Imprimer le certificat</button>
+      <button id="restartBtn" class="secondary">Nouvelle tentative</button>
+    </div>
+    <div id="review" class="review"></div>
+  </section>
+
+  <section id="certificate" class="certificate">
+    <h2>Certificat de réussite</h2>
+    <p>Quiz d’intégration — Accueil et conseil aux visiteurs dans la Somme</p>
+    <div class="name" id="certName"></div>
+    <p id="certOrg"></p>
+    <p>a validé le quiz avec un score de</p>
+    <div class="score" id="certScore"></div>
+    <p id="certDate"></p>
+    <p class="small">Seuil de validation : 30 bonnes réponses sur 40, soit 75 %.</p>
+  </section>
+</main>
+
+<script>
+const QUESTION_BANK = [{"num": 1, "question": "Un voyageur vous demande : « Où puis-je aller sur la plage pour voir les phoques de tout près ? » Quelle est la bonne posture ?", "options": [{"label": "A", "text": "Lui indiquer le banc de sable le plus proche et lui conseiller d'y aller à marée basse.", "correct": false}, {"label": "B", "text": "Lui expliquer qu'il faut rester à 300 mètres minimum, utiliser des jumelles, et privilégier une observation où un bras de mer sépare la colonie du public.", "correct": true}, {"label": "C", "text": "Lui conseiller de louer un kayak pour débarquer directement sur le banc de sable où ils dorment.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 2, "question": "À quel signal comportemental un voyageur (ou vous-même sur une photo) peut-il savoir qu'il est trop proche d'un phoque ?", "options": [{"label": "A", "text": "Quand le phoque pousse des cris ou commence à nager rapidement.", "correct": false}, {"label": "B", "text": "Dès que l'animal redresse la tête et observe le visiteur, signe d'inquiétude.", "correct": true}, {"label": "C", "text": "Uniquement si le phoque essaie de mordre.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 3, "question": "Quel est le « geste ultime de dérangement » d'un phoque qui indique une situation critique pour sa santé ?", "options": [{"label": "A", "text": "Le fait qu'il s'endorme profondément.", "correct": false}, {"label": "B", "text": "La mise à l'eau précipitée, qui fatigue l'animal et peut séparer les mères de leurs petits.", "correct": true}, {"label": "C", "text": "Le fait qu'il change de couleur au soleil.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 4, "question": "Un promeneur trouve un jeune blanchon (bébé phoque) seul sur la plage. Que devez-vous lui dire de faire ?", "options": [{"label": "A", "text": "De le réchauffer avec une couverture et d'essayer de le remettre à l'eau.", "correct": false}, {"label": "B", "text": "De s'en éloigner car la mère va revenir, et si l'animal semble blessé, de contacter le centre Pélagis au 05 46 44 99 10.", "correct": true}, {"label": "C", "text": "De le ramener immédiatement à l'Office de Tourisme pour le mettre à l'abri.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 5, "question": "Un touriste souhaite faire du cerf-volant géant ou du kitesurf dans la Réserve Naturelle Nationale de la Baie de Somme. Est-ce autorisé ?", "options": [{"label": "A", "text": "Oui, c'est une zone de vent idéale et totalement libre.", "correct": false}, {"label": "B", "text": "Oui, mais uniquement si la plage n'est pas surveillée.", "correct": false}, {"label": "C", "text": "Non, le kitesurf et les sports à voile haute sont strictement interdits dans le périmètre de la Réserve.", "correct": true}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 6, "question": "Un visiteur est surpris de voir des cavaliers sur la plage de la Réserve Naturelle et vous demande s'ils peuvent galoper sur le sable. Que répondez-vous ?", "options": [{"label": "A", "text": "Oui, le galop est libre en dehors des zones de baignade.", "correct": false}, {"label": "B", "text": "Non, dans le périmètre de la Réserve Naturelle, les cavaliers ont l'obligation d'avancer au pas.", "correct": true}, {"label": "C", "text": "Les chevaux sont totalement interdits dans toute la Baie de Somme.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 7, "question": "Un vacancier insiste : « Je veux ramasser un petit seau de galets en souvenir de mon séjour à Ault ou Mers-les-Bains. » Quelle est la règle ?", "options": [{"label": "A", "text": "C'est autorisé s'ils font moins de 5 centimètres.", "correct": false}, {"label": "B", "text": "C'est toléré uniquement sur l'esplanade haute.", "correct": false}, {"label": "C", "text": "C'est strictement interdit, car le ramassage des galets fragilise le littoral face à l'érosion.", "correct": true}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "Les prélèvements dans le milieu naturel sont réglementés pour préserver l’équilibre du littoral et des ressources."}, {"num": 8, "question": "Un groupe de randonneurs vous demande s'il est possible de traverser la Baie de Somme seul en autonomie à pied. Quelle consigne de sécurité donnez-vous ?", "options": [{"label": "A", "text": "Prudence extrême : c'est un milieu dangereux. Il faut impérativement faire appel à un guide qualifié et savoir qu'il faut quitter la baie 3h30 avant la pleine mer.", "correct": true}, {"label": "B", "text": "C'est tout à fait possible si vous avez une application GPS mise à jour.", "correct": false}, {"label": "C", "text": "La traversée est interdite à pied, elle ne se fait qu'en petit train.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "La Baie de Somme est un milieu mouvant : une traversée se prépare et doit être encadrée par des professionnels qualifiés."}, {"num": 9, "question": "Des parents vous demandent s'ils peuvent emmener leur chien (tenu en laisse) pour une randonnée sur le Sentier du littoral ou dans la Réserve Naturelle. Quelle est la nuance importante ?", "options": [{"label": "A", "text": "Les chiens sont acceptés partout dès qu'ils ont une laisse.", "correct": false}, {"label": "B", "text": "Les chiens sont acceptés en laisse sur la majorité des plages, mais interdits dans les zones de baignade surveillée, sur le Sentier du littoral et dans la Réserve Naturelle (même en laisse).", "correct": true}, {"label": "C", "text": "Les chiens sont interdits sur l'ensemble du département de la Somme.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 10, "question": "Un passionné de technologie vous demande s'il peut faire voler son drone au-dessus de la Baie de Somme pour photographier les paysages. Que lui répondez-vous ?", "options": [{"label": "A", "text": "Oui, tant qu'il ne filme pas les gens sur la plage.", "correct": false}, {"label": "B", "text": "Non, l'usage des drones est strictement interdit dans le périmètre de la Réserve Naturelle Nationale.", "correct": true}, {"label": "C", "text": "Oui, mais uniquement à une altitude supérieure à 150 mètres.", "correct": false}], "theme": "Baie de Somme, phoques & réglementations littorales", "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 11, "question": "Un voyageur arrive avec son paddle gonflable personnel et demande : « Où puis-je me mettre à l'eau pour visiter les Hortillonnages d'Amiens ? »", "options": [{"label": "A", "text": "N'importe où depuis les pontons du quai de la Somme.", "correct": false}, {"label": "B", "text": "N'importe où sur le fleuve Somme, mais attention : les paddles personnels sont interdits à l'intérieur des canaux des Hortillonnages par arrêté préfectoral.", "correct": true}, {"label": "C", "text": "Les paddles sont interdits dans tout le département.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 12, "question": "Quelle est la vitesse maximale autorisée pour les bateaux circulant dans les Hortillonnages et sur le canal de la Somme ?", "options": [{"label": "A", "text": "3 km/h", "correct": false}, {"label": "B", "text": "6 km/h", "correct": true}, {"label": "C", "text": "10 km/h", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 13, "question": "Un visiteur souhaite louer un canoë pour explorer les Hortillonnages de manière autonome. À quelle unique condition est-ce possible dans la zone réglementée ?", "options": [{"label": "A", "text": "Il suffit de porter un gilet de sauvetage.", "correct": false}, {"label": "B", "text": "La pratique du canoë-kayak y est restreinte à la location exclusive via le Club Nautique de Rivery, aux licenciés ou aux riverains.", "correct": true}, {"label": "C", "text": "C'est totalement libre tous les jours de l'année sans horaires.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 14, "question": "Quels sont les horaires et la période d'autorisation de navigation dans les Hortillonnages pour respecter la tranquillité du site ?", "options": [{"label": "A", "text": "Toute l'année, de l'aube au coucher du soleil.", "correct": false}, {"label": "B", "text": "Du 1er avril au 30 octobre, uniquement de 9h à 19h.", "correct": true}, {"label": "C", "text": "Uniquement les week-ends de juin à août.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 15, "question": "Un plaisancier vous demande s'il peut jeter l'ancre au milieu d'un canal des Hortillonnages pour pique-niquer. Quelle est la règle ?", "options": [{"label": "A", "text": "Oui, si son bateau mesure moins de 10 mètres.", "correct": false}, {"label": "B", "text": "Non, l'ancrage est strictement interdit dans les Hortillonnages.", "correct": true}, {"label": "C", "text": "Oui, mais uniquement devant les parcelles publiques.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 16, "question": "Lors de la promotion des Hortillonnages, quel type d'embarcation innovante et écoresponsable devez-vous valoriser en priorité (comme celles du Quai de la Somme) ?", "options": [{"label": "A", "text": "Les barques équipées de puissants moteurs thermiques.", "correct": false}, {"label": "B", "text": "Les bateaux-terrasses électriques, silencieux et autonomes grâce à des panneaux photovoltaïques.", "correct": true}, {"label": "C", "text": "Les motomarine (scooters des mers).", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 17, "question": "Sur les Espaces Naturels Sensibles (ENS) du Département (comme le Marais d'Éclusier ou les Étangs de Long), la baignade et le canoë sont-ils libres ?", "options": [{"label": "A", "text": "Oui, ce sont des espaces de loisirs ouverts à tous types d'activités nautiques.", "correct": false}, {"label": "B", "text": "Non, on ne s'y baigne pas et on n'y pratique pas d'activités nautiques, sauf exception spécifique (comme le canoë sous condition à Éclusier).", "correct": true}, {"label": "C", "text": "La baignade est autorisée uniquement pour les enfants.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 18, "question": "Quelle est la règle concernant la présence des chiens sur l'Espace Naturel Sensible des Étangs de Cléry-sur-Somme ?", "options": [{"label": "A", "text": "Ils doivent être tenus en laisse courte.", "correct": false}, {"label": "B", "text": "Ils sont autorisés en liberté s'ils obéissent au rappel.", "correct": false}, {"label": "C", "text": "Les chiens y sont strictement interdits, même tenus en laisse.", "correct": true}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 19, "question": "Un promeneur remarque du bois coupé au sol dans un Espace Naturel Sensible et veut en ramasser pour son barbecue. Que lui dites-vous ?", "options": [{"label": "A", "text": "C'est autorisé si le bois est déjà sec et au sol.", "correct": false}, {"label": "B", "text": "C'est interdit, le bois coupé reste la propriété du Département et doit être préservé pour l'écosystème.", "correct": true}, {"label": "C", "text": "C'est autorisé dans la limite d'un sac par famille.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 20, "question": "Deux sites de la Somme, le Camp César à Érondelle et Les Alentours de Samara, ont une double spécificité. Laquelle ?", "options": [{"label": "A", "text": "Ce sont des réserves de chasse présidentielles.", "correct": false}, {"label": "B", "text": "Ce sont des sites archéologiques classés Monuments Historiques : il y est interdit d'effectuer des fouilles ou de dégrader les vestiges.", "correct": true}, {"label": "C", "text": "Ce sont les seuls endroits du département où le camping sauvage est autorisé.", "correct": false}], "theme": "Hortillonnages & Espaces Naturels Sensibles", "explanation": "Les Hortillonnages et les Espaces Naturels Sensibles sont des sites fragiles : les pratiques autorisées y sont encadrées."}, {"num": 21, "question": "Un grand week-end de mai ensoleillé arrive, la Baie de Somme est saturée. Vers quelles alternatives de l'arrière-pays orientez-vous les flux de visiteurs ?", "options": [{"label": "A", "text": "Vous leur conseillez d'attendre patiemment dans les bouchons.", "correct": false}, {"label": "B", "text": "Vous les orientez vers la Vallée de Somme, l'Abbaye et les Jardins de Valloires, la Forêt de Crécy ou l'Abbaye de Saint-Riquier.", "correct": true}, {"label": "C", "text": "Vous leur proposez de reporter leur séjour en Normandie.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 22, "question": "Un influenceur ou un prestataire vous demande s'il est judicieux de promouvoir massivement un spot précis parce qu'il est « instagrammable ». Que préconise le guide ?", "options": [{"label": "A", "text": "Oui, il faut faire le buzz au maximum pour attirer du monde rapidement.", "correct": false}, {"label": "B", "text": "Non, il faut éviter de focaliser la communication sur des spots uniques pour ne pas créer de surfréquentation destructrice et dangereuse (comme l'exemple de l'œil du Panda à Étretat).", "correct": true}, {"label": "C", "text": "Oui, mais uniquement pendant les mois de juillet et août.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 23, "question": "Comment devons-nous adapter l'iconographie (les visuels) sur nos brochures et réseaux sociaux selon la stratégie RSE de Somme Tourisme ?", "options": [{"label": "A", "text": "Utiliser uniquement des photos de plages bondées en plein été sous un grand soleil.", "correct": false}, {"label": "B", "text": "Valoriser la destination aux 4 saisons en montrant la beauté des lumières d'hiver, des ciels tourmentés et des figurants en bonnet et écharpe.", "correct": true}, {"label": "C", "text": "Ne publier aucune photo pour garder les lieux secrets.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 24, "question": "Pourquoi est-il contre-productif et interdit de publier une photo d'un randonneur marchant au sommet d'une crête de dune ?", "options": [{"label": "A", "text": "Parce que le paysage n'est pas beau sous cet angle.", "correct": false}, {"label": "B", "text": "Parce que cela incite involontairement au piétinement, ce qui contribue à l'érosion de ce milieu fragile.", "correct": true}, {"label": "C", "text": "Parce que les dunes appartiennent à des propriétaires privés qui refusent le droit à l'image.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 25, "question": "Un randonneur s'étonne : « Pourquoi a-t-on retiré les poubelles des espaces naturels isolés dans la Somme ? » Que lui expliquez-vous ?", "options": [{"label": "A", "text": "Pour éviter que les animaux se blessent ou s'étouffent, empêcher le vent de disperser les déchets et réduire les coûts élevés de ramassage en zone isolée. Chacun doit remporter ses déchets.", "correct": true}, {"label": "B", "text": "Parce que le département n'a plus le budget pour acheter des sacs plastiques.", "correct": false}, {"label": "C", "text": "Pour inciter les gens à brûler leurs déchets sur place.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 26, "question": "Quelle est la durée de vie estimée d'un simple mégot de cigarette abandonné dans la nature ?", "options": [{"label": "A", "text": "6 mois", "correct": false}, {"label": "B", "text": "2 ans", "correct": true}, {"label": "C", "text": "10 ans", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 27, "question": "En Forêt de Crécy, quelle est la règle stricte concernant la tenue des chiens pendant la période de reproduction de la faune sauvage ?", "options": [{"label": "A", "text": "Les chiens doivent être muselés du 1er janvier au 31 décembre.", "correct": false}, {"label": "B", "text": "Ils doivent obligatoirement être tenus en laisses du 15 avril au 30 juin (période des naissances).", "correct": true}, {"label": "C", "text": "Les chiens sont totalement interdits en forêt, peu importe la saison.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 28, "question": "Quelle est la limite autorisée pour la cueillette de loisir des champignons ou des baies en forêt pour un promeneur ?", "options": [{"label": "A", "text": "C'est totalement illimité tant qu'on ne les vend pas.", "correct": false}, {"label": "B", "text": "La cueillette doit être modérée, limitée à un panier de 5 litres maximum par famille.", "correct": true}, {"label": "C", "text": "Un maximum de 20 litres par personne et par jour.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 29, "question": "Pourquoi le \"guide de communication\" insiste-t-il sur l'importance de laisser le bois mort se décomposer au sol en forêt ?", "options": [{"label": "A", "text": "Uniquement pour faire joli et donner un aspect sauvage.", "correct": false}, {"label": "B", "text": "Parce qu'en se décomposant, il recharge le sol en minéraux et constitue un habitat et une source de nourriture pour la biodiversité.", "correct": true}, {"label": "C", "text": "Pour empêcher les vélos de sortir des pistes balisées.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "La bonne posture consiste à répartir les flux, éviter la surfréquentation et encourager des comportements respectueux."}, {"num": 30, "question": "Un voyageur souhaite ramasser de la salicorne en Baie de Somme pour sa consommation personnelle. Quelle est la réglementation en vigueur ?", "options": [{"label": "A", "text": "C'est totalement interdit pour les particuliers.", "correct": false}, {"label": "B", "text": "C'est une cueillette réglementée par arrêté préfectoral, limitée pour les loisirs à 0,5 kg par personne et par jour, en utilisant un couteau.", "correct": true}, {"label": "C", "text": "C'est libre et gratuit sans aucune limite de poids.", "correct": false}], "theme": "Gestion des flux, éco-gestes & forêt", "explanation": "Les prélèvements dans le milieu naturel sont réglementés pour préserver l’équilibre du littoral et des ressources."}, {"num": 31, "question": "Un voyageur à Paris vous demande : « Est-il possible de passer un week-end en Baie de Somme sans utiliser une seule fois ma voiture ? » Que lui répondez-vous ?", "options": [{"label": "A", "text": "Absolument ! Train Paris-Nord > Noyelles-sur-Mer, location de vélo en gare pour rejoindre Le Crotoy, traversée guidée à pied, et retour en petit train à vapeur (CFBS).", "correct": true}, {"label": "B", "text": "Non, c'est totalement impossible car les pistes cyclables n'existent pas encore.", "correct": false}, {"label": "C", "text": "Oui, mais il devra faire l'ensemble des trajets à pied le long de l'autoroute.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 32, "question": "Quelle est la condition pour voyager gratuitement avec son vélo à bord des trains TER Hauts-de-France ?", "options": [{"label": "A", "text": "Il n'y a aucune condition, on monte à bord à n'importe quel moment sans prévenir.", "correct": false}, {"label": "B", "text": "C'est gratuit, mais il est obligatoire de réserver son emplacement vélo à l'avance sur le site internet dédié.", "correct": true}, {"label": "C", "text": "C'est gratuit uniquement pour les vélos pliants.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 33, "question": "Combien de gares desservent le territoire samarien pour permettre aux voyageurs de venir ou de se déplacer sans voiture ?", "options": [{"label": "A", "text": "12 gares", "correct": false}, {"label": "B", "text": "22 gares", "correct": false}, {"label": "C", "text": "35 gares", "correct": true}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 34, "question": "Quelle application mobile officielle devez-vous absolument conseiller aux navigants et itinérants le long du fleuve Somme pour coordonner le passage des écluses ?", "options": [{"label": "A", "text": "Somme Tourisme Sans Fil", "correct": false}, {"label": "B", "text": "Somme en Poche", "correct": true}, {"label": "C", "text": "Écluses Connect 80", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 35, "question": "Un cyclotouriste s'étonne : « Puis-je rouler à $30\\text{ km/h}$ en groupe de front sur la Véloroute de la Vallée de Somme ? » Quel rappel aux bons usages faites-vous ?", "options": [{"label": "A", "text": "Oui, les vélos ont tous les droits sur le chemin de halage.", "correct": false}, {"label": "B", "text": "Non, la vitesse y est conseillée à 15 km/h maximum, il faut rouler à droite et ne pas bloquer les autres usagers (piétons, pêcheurs).", "correct": true}, {"label": "C", "text": "La véloroute est réservée exclusivement aux vélos de course professionnels.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 36, "question": "Un randonneur au long cours vous demande quels sont les grands itinéraires pédestres (GR) qui traversent la Somme. Lequel fait l'intégralité du fil du fleuve ?", "options": [{"label": "A", "text": "Le GR 120 (Sentier du Littoral)", "correct": false}, {"label": "B", "text": "Le GR 800 (Au fil de la Somme)", "correct": true}, {"label": "C", "text": "Le GR 125", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 37, "question": "Que garantit le label national « Accueil Vélo » proposé par plusieurs offices de tourisme, hébergeurs et restaurateurs de la Somme ?", "options": [{"label": "A", "text": "Que le loueur offre des réductions de 50% sur les vélos électriques.", "correct": false}, {"label": "B", "text": "Un accueil adapté aux cyclotouristes avec un abri sécurisé pour la nuit, un kit de réparation et de la documentation touristique dédiée.", "correct": true}, {"label": "C", "text": "Que l'établissement est situé à moins de 5 mètres d'une piste cyclable.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 38, "question": "Un itinérant en kayak vous demande s'il peut installer sa tente n'importe où sur les berges du fleuve Somme pour la nuit. Quelle solution légale lui proposez-vous ?", "options": [{"label": "A", "text": "Le bivouac est totalement libre et autorisé sur toutes les parcelles privées.", "correct": false}, {"label": "B", "text": "Le bivouac est interdit dans les espaces protégés, mais des zones de bivouac autorisées et aménagées existent (comme à Lamotte-Brebière pour 3 € avec accès aux sanitaires).", "correct": true}, {"label": "C", "text": "Il doit obligatoirement réserver une suite dans un hôtel 4 étoiles.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 39, "question": "Quelle est la vitesse maximale autorisée et la règle de cohabitation sur la véloroute aménagée le long du chemin de halage ?", "options": [{"label": "A", "text": "25 km/h, et les piétons doivent s'écarter à l'approche des vélos.", "correct": false}, {"label": "B", "text": "Vitesse limitée à 15 km/h, circulation à droite, priorité partagée entre cyclistes, promeneurs, pêcheurs et poussettes.", "correct": true}, {"label": "C", "text": "45 km/h, l'usage des trottinettes électriques de grande puissance y est encouragé.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 40, "question": "Un voyageur se plaint de la présence de tiques ou de chenilles processionnaires lors de ses randonnées. Quel conseil pratique (issu du guide de com) devez-vous lui donner pour ses prochaines sorties ?", "options": [{"label": "A", "text": "De ne plus jamais marcher dans l'herbe ou en forêt.", "correct": false}, {"label": "B", "text": "De bien préparer sa sortie en consultant la météo et de couvrir ses bras et ses jambes pour se protéger.", "correct": true}, {"label": "C", "text": "D'appliquer une solution de vinaigre pur sur tout le corps avant de partir.", "correct": false}], "theme": "Mobilités durables, itinérance & vie pratique", "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 41, "theme": "Questions fréquentes : Baie de Somme & sécurité", "question": "Un voyageur demande : « Où et quand voir les phoques en Baie de Somme ? » Quelle réponse donnez-vous ?", "options": [{"label": "A", "text": "Lui dire d’aller au hasard sur la plage, les phoques sont visibles partout et à toute heure.", "correct": false}, {"label": "B", "text": "L’orienter vers des points d’observation adaptés comme la pointe du Hourdel, lui conseiller de consulter les horaires de marées et de respecter la distance minimale de 300 mètres.", "correct": true}, {"label": "C", "text": "Lui conseiller de s’approcher discrètement à marée basse pour faire une photo de près.", "correct": false}], "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 42, "theme": "Questions fréquentes : Baie de Somme & sécurité", "question": "Un visiteur demande les horaires de marées avant de partir en balade. Quelle est la bonne posture ?", "options": [{"label": "A", "text": "Lui donner les horaires du jour, rappeler que la marée monte vite et qu’une traversée de baie ne s’improvise pas.", "correct": true}, {"label": "B", "text": "Lui dire que les marées ne sont dangereuses qu’en hiver.", "correct": false}, {"label": "C", "text": "Lui conseiller de suivre les traces des autres promeneurs sans autre précaution.", "correct": false}], "explanation": "La Baie de Somme est un milieu mouvant : une traversée se prépare et doit être encadrée par des professionnels qualifiés."}, {"num": 43, "theme": "Questions fréquentes : Baie de Somme & sécurité", "question": "Un touriste veut réserver une traversée de la Baie de Somme. Quelle solution privilégier ?", "options": [{"label": "A", "text": "Lui conseiller de partir seul avec une application GPS.", "correct": false}, {"label": "B", "text": "L’orienter vers une traversée encadrée par un guide qualifié ou un guide naturaliste, avec réservation préalable.", "correct": true}, {"label": "C", "text": "Lui dire de traverser uniquement à marée haute pour aller plus vite.", "correct": false}], "explanation": "La Baie de Somme est un milieu mouvant : une traversée se prépare et doit être encadrée par des professionnels qualifiés."}, {"num": 44, "theme": "Questions fréquentes : Baie de Somme & sécurité", "question": "En haute saison, un voyageur demande où se garer à Saint-Valery-sur-Somme ou au Crotoy. Que recommandez-vous ?", "options": [{"label": "A", "text": "Lui conseiller d’arriver tôt, d’utiliser les parkings officiels, et si possible de privilégier le train, le vélo ou les navettes selon les disponibilités.", "correct": true}, {"label": "B", "text": "Lui dire de se garer sur les bas-côtés ou devant les accès de plage s’il ne trouve pas de place.", "correct": false}, {"label": "C", "text": "Lui conseiller d’éviter totalement la destination.", "correct": false}], "explanation": "La réponse attendue privilégie la sécurité, la fiabilité de l’information et la préservation du territoire."}, {"num": 45, "theme": "Questions fréquentes : Baie de Somme & sécurité", "question": "Quelle information doit idéalement être disponible en permanence au comptoir d’un office de tourisme de la côte ?", "options": [{"label": "A", "text": "La grille des marées du jour et la liste des guides naturalistes ou guides de traversée recommandés.", "correct": true}, {"label": "B", "text": "Uniquement la météo nationale de la semaine suivante.", "correct": false}, {"label": "C", "text": "La liste des meilleurs spots secrets à publier sur Instagram.", "correct": false}], "explanation": "La réponse attendue privilégie la sécurité, la fiabilité de l’information et la préservation du territoire."}, {"num": 46, "theme": "Questions fréquentes : visites & incontournables", "question": "Un visiteur demande : « Que faire s’il pleut ? » Quelle réponse est la plus adaptée ?", "options": [{"label": "A", "text": "Lui dire qu’il n’y a rien à faire dans la Somme quand il pleut.", "correct": false}, {"label": "B", "text": "L’orienter vers des visites couvertes ou adaptées : musées, Historial de la Grande Guerre, souterrains de Naours, maison de Jules Verne, cathédrale d’Amiens.", "correct": true}, {"label": "C", "text": "Lui conseiller uniquement d’attendre le retour du soleil dans sa voiture.", "correct": false}], "explanation": "Un bon conseil touristique s’adapte à la météo, au profil du visiteur, au temps disponible et aux conditions d’ouverture."}, {"num": 47, "theme": "Questions fréquentes : visites & incontournables", "question": "Un voyageur veut prendre le Train à Vapeur de la Baie de Somme. Que faut-il vérifier avant de l’orienter ?", "options": [{"label": "A", "text": "Les horaires, les gares de départ, les tarifs, les jours de circulation et les possibilités de réservation.", "correct": true}, {"label": "B", "text": "Uniquement la couleur de la locomotive.", "correct": false}, {"label": "C", "text": "Rien : le train circule toutes les 10 minutes toute l’année.", "correct": false}], "explanation": "Un bon conseil touristique s’adapte à la météo, au profil du visiteur, au temps disponible et aux conditions d’ouverture."}, {"num": 48, "theme": "Questions fréquentes : visites & incontournables", "question": "Quels sites peut-on citer à un visiteur intéressé par la Grande Guerre dans la Somme ?", "options": [{"label": "A", "text": "Le Circuit du Souvenir, le mémorial de Thiepval, l’Historial de la Grande Guerre et le Musée Somme 1916 à Albert.", "correct": true}, {"label": "B", "text": "Uniquement les plages de galets du littoral.", "correct": false}, {"label": "C", "text": "Seulement les Hortillonnages d’Amiens.", "correct": false}], "explanation": "Un bon conseil touristique s’adapte à la météo, au profil du visiteur, au temps disponible et aux conditions d’ouverture."}, {"num": 49, "theme": "Questions fréquentes : visites & incontournables", "question": "Une famille demande quoi faire avec des enfants. Quelle proposition est pertinente ?", "options": [{"label": "A", "text": "Proposer uniquement des visites longues et silencieuses sans pause.", "correct": false}, {"label": "B", "text": "Suggérer des activités accessibles comme le Parc du Marquenterre, Samara, le train à vapeur ou des balades nature encadrées.", "correct": true}, {"label": "C", "text": "Leur conseiller d’éviter les sites naturels.", "correct": false}], "explanation": "Un bon conseil touristique s’adapte à la météo, au profil du visiteur, au temps disponible et aux conditions d’ouverture."}, {"num": 50, "theme": "Questions fréquentes : visites & incontournables", "question": "Un visiteur demande comment visiter Amiens en une journée. Quels incontournables citer ?", "options": [{"label": "A", "text": "Les Hortillonnages, la cathédrale Notre-Dame, la maison de Jules Verne et une balade dans le centre-ville.", "correct": true}, {"label": "B", "text": "Uniquement les plages de la côte picarde.", "correct": false}, {"label": "C", "text": "Seulement les parkings autour de la ville.", "correct": false}], "explanation": "Un bon conseil touristique s’adapte à la météo, au profil du visiteur, au temps disponible et aux conditions d’ouverture."}, {"num": 51, "theme": "Questions fréquentes : mobilités & randonnées", "question": "Un cyclotouriste demande où rouler dans la Somme. Quels itinéraires peut-on mettre en avant ?", "options": [{"label": "A", "text": "La Vélomaritime, la Véloroute de la Vallée de Somme, le réseau point-nœuds et les boucles locales adaptées.", "correct": true}, {"label": "B", "text": "Uniquement les routes départementales les plus rapides.", "correct": false}, {"label": "C", "text": "Les sentiers interdits au public pour être plus tranquille.", "correct": false}], "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 52, "theme": "Questions fréquentes : mobilités & randonnées", "question": "Un randonneur demande les plus belles balades pédestres. Quelle est la bonne méthode de conseil ?", "options": [{"label": "A", "text": "Demander son niveau, la durée souhaitée, la météo, la mobilité, puis proposer un itinéraire balisé et adapté.", "correct": true}, {"label": "B", "text": "L’envoyer systématiquement vers la randonnée la plus longue.", "correct": false}, {"label": "C", "text": "L’encourager à sortir des sentiers balisés pour trouver des lieux plus sauvages.", "correct": false}], "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 53, "theme": "Questions fréquentes : mobilités & randonnées", "question": "Un voyageur sans voiture demande s’il peut se déplacer entre les villes de la côte. Quelle réponse est la plus utile ?", "options": [{"label": "A", "text": "L’inviter à vérifier les trains, bus, navettes, locations de vélos et correspondances disponibles selon la saison et le jour.", "correct": true}, {"label": "B", "text": "Lui dire que c’est impossible sans voiture, sans vérifier.", "correct": false}, {"label": "C", "text": "Lui conseiller de marcher sur les routes principales.", "correct": false}], "explanation": "Le conseil en mobilité doit tenir compte des horaires, des saisons, des correspondances et des usages partagés."}, {"num": 54, "theme": "Questions fréquentes : gastronomie & art de vivre", "question": "Un voyageur demande quelles spécialités locales goûter. Quelle liste est pertinente ?", "options": [{"label": "A", "text": "L’agneau de pré-salé, la ficelle picarde, le gâteau battu, la salicorne et les produits de la baie.", "correct": true}, {"label": "B", "text": "Uniquement des spécialités provençales.", "correct": false}, {"label": "C", "text": "Seulement des plats industriels faciles à transporter.", "correct": false}], "explanation": "Les recommandations gourmandes doivent être adaptées au budget, aux envies, à la saison et aux disponibilités."}, {"num": 55, "theme": "Questions fréquentes : gastronomie & art de vivre", "question": "Un visiteur cherche un marché local ou un marché de producteurs. Quelle information faut-il donner en priorité ?", "options": [{"label": "A", "text": "Les jours, horaires, lieux, saisonnalité et éventuels marchés nocturnes ou marchés de producteurs à proximité.", "correct": true}, {"label": "B", "text": "Une liste non vérifiée de marchés ouverts tous les jours.", "correct": false}, {"label": "C", "text": "Lui dire que les marchés ne concernent pas les touristes.", "correct": false}], "explanation": "Les recommandations gourmandes doivent être adaptées au budget, aux envies, à la saison et aux disponibilités."}, {"num": 56, "theme": "Questions fréquentes : gastronomie & art de vivre", "question": "Un voyageur demande un bon restaurant traditionnel ou avec vue sur mer. Quelle posture adopter ?", "options": [{"label": "A", "text": "Adapter la réponse à son budget, sa localisation, ses envies, la saison et l’inviter à réserver, surtout en haute saison.", "correct": true}, {"label": "B", "text": "Recommander toujours le même restaurant, quelle que soit la demande.", "correct": false}, {"label": "C", "text": "Lui conseiller de choisir uniquement selon les photos sur les réseaux sociaux.", "correct": false}], "explanation": "Les recommandations gourmandes doivent être adaptées au budget, aux envies, à la saison et aux disponibilités."}, {"num": 57, "theme": "Questions fréquentes : pratique & accueil", "question": "Un visiteur cherche un hébergement disponible pour ce soir. Que faire ?", "options": [{"label": "A", "text": "Vérifier les disponibilités actualisées, élargir si besoin le périmètre géographique et proposer plusieurs types d’hébergements adaptés.", "correct": true}, {"label": "B", "text": "Répondre qu’il faut toujours réserver six mois à l’avance.", "correct": false}, {"label": "C", "text": "Lui donner une seule adresse sans vérifier la disponibilité.", "correct": false}], "explanation": "Au comptoir, l’information pratique doit être vérifiée, actualisée et adaptée à la situation immédiate du visiteur."}, {"num": 58, "theme": "Questions fréquentes : pratique & accueil", "question": "Un camping-cariste demande où stationner pour la nuit. Quelle réponse est adaptée ?", "options": [{"label": "A", "text": "L’orienter vers les aires de camping-car autorisées, rappeler les règles locales de stationnement et éviter les espaces naturels sensibles ou zones interdites.", "correct": true}, {"label": "B", "text": "Lui dire qu’il peut dormir n’importe où s’il reste discret.", "correct": false}, {"label": "C", "text": "Lui conseiller de se garer sur les dunes pour être au calme.", "correct": false}], "explanation": "Au comptoir, l’information pratique doit être vérifiée, actualisée et adaptée à la situation immédiate du visiteur."}, {"num": 59, "theme": "Questions fréquentes : pratique & accueil", "question": "Un visiteur demande où trouver du Wi-Fi gratuit. Quelle information pratique donner ?", "options": [{"label": "A", "text": "L’orienter vers les offices de tourisme, médiathèques, lieux publics ou hébergements qui proposent un accès Wi-Fi, selon la commune.", "correct": true}, {"label": "B", "text": "Lui dire de demander le mot de passe des habitants.", "correct": false}, {"label": "C", "text": "Lui répondre que le Wi-Fi est interdit dans la Somme.", "correct": false}], "explanation": "Au comptoir, l’information pratique doit être vérifiée, actualisée et adaptée à la situation immédiate du visiteur."}, {"num": 60, "theme": "Questions fréquentes : pratique & accueil", "question": "Un voyageur demande : « Qu’est-ce qu’il y a ce week-end ? » Quelle est la bonne méthode ?", "options": [{"label": "A", "text": "Consulter l’agenda actualisé, filtrer selon ses envies, sa localisation et la météo, puis proposer événements, festivals, brocantes ou visites guidées.", "correct": true}, {"label": "B", "text": "Citer uniquement les événements de l’année précédente.", "correct": false}, {"label": "C", "text": "Répondre qu’il n’y a jamais d’événements hors été.", "correct": false}], "explanation": "Au comptoir, l’information pratique doit être vérifiée, actualisée et adaptée à la situation immédiate du visiteur."}, {"num": 61, "theme": "IA, informations en ligne & posture de conseil", "question": "Un voyageur dit : « ChatGPT m’a indiqué qu’on pouvait traverser la Baie de Somme seul à marée basse. » Quelle est la bonne réaction ?", "options": [{"label": "A", "text": "Valider l’information, car une IA donne toujours des réponses fiables.", "correct": false}, {"label": "B", "text": "Rappeler que la baie est un milieu dangereux, vérifier les horaires de marées du jour et recommander une traversée avec un guide qualifié.", "correct": true}, {"label": "C", "text": "Lui conseiller de demander une deuxième fois à ChatGPT sur son téléphone.", "correct": false}], "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 62, "theme": "IA, informations en ligne & posture de conseil", "question": "Un client affirme : « Une IA m’a donné un horaire de marée pour aujourd’hui. » Quelle information doit primer ?", "options": [{"label": "A", "text": "L’horaire donné par l’IA, s’il semble cohérent.", "correct": false}, {"label": "B", "text": "La grille officielle et actualisée des marées du jour, car les informations pratiques doivent être vérifiées à la source.", "correct": true}, {"label": "C", "text": "L’horaire de marée de la veille, généralement identique.", "correct": false}], "explanation": "L’information liée aux phoques et aux marées doit toujours être prudente, actualisée et orientée vers la sécurité."}, {"num": 63, "theme": "IA, informations en ligne & posture de conseil", "question": "Un visiteur dit : « J’ai vu sur ChatGPT que les chiens sont acceptés partout en laisse dans la baie. » Que répondre ?", "options": [{"label": "A", "text": "Confirmer, car la laisse suffit toujours dans les espaces naturels.", "correct": false}, {"label": "B", "text": "Nuancer : certaines zones restent interdites aux chiens, même tenus en laisse, notamment la Réserve Naturelle, le Sentier du littoral ou les zones de baignade surveillée.", "correct": true}, {"label": "C", "text": "Lui dire qu’aucun chien n’est accepté dans tout le département.", "correct": false}], "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 64, "theme": "IA, informations en ligne & posture de conseil", "question": "Un voyageur arrive avec une liste de restaurants générée par une IA. Quelle posture adopter ?", "options": [{"label": "A", "text": "Vérifier les informations utiles : ouverture, localisation, réservation, saisonnalité, budget et adéquation avec sa demande.", "correct": true}, {"label": "B", "text": "Lui garantir que tous les restaurants cités existent et sont ouverts.", "correct": false}, {"label": "C", "text": "Refuser de l’aider parce qu’il a utilisé une IA.", "correct": false}], "explanation": "L’IA peut aider à préparer une demande, mais elle ne remplace jamais la vérification humaine, locale et actualisée."}, {"num": 65, "theme": "IA, informations en ligne & posture de conseil", "question": "Un client montre une information trouvée sur une IA ou un réseau social qui contredit les consignes de l’office. Quelle est la meilleure réponse ?", "options": [{"label": "A", "text": "Expliquer calmement que certaines informations en ligne peuvent être incomplètes ou obsolètes, puis s’appuyer sur les sources locales actualisées et les règles de sécurité.", "correct": true}, {"label": "B", "text": "Répondre sèchement que le client a tort.", "correct": false}, {"label": "C", "text": "Ignorer la question pour éviter le débat.", "correct": false}], "explanation": "Dans les espaces naturels protégés, la règle locale et la préservation du site priment toujours sur les habitudes ou les informations vues en ligne."}, {"num": 66, "theme": "IA, informations en ligne & posture de conseil", "question": "Un prestataire souhaite utiliser l’IA pour rédiger des conseils touristiques. Quel réflexe professionnel faut-il rappeler ?", "options": [{"label": "A", "text": "Publier directement le texte généré, sans relecture, pour gagner du temps.", "correct": false}, {"label": "B", "text": "Relire, vérifier les informations pratiques, adapter au territoire et éviter de diffuser des consignes dangereuses ou non actualisées.", "correct": true}, {"label": "C", "text": "Utiliser uniquement des formulations très vagues pour ne prendre aucun risque.", "correct": false}], "explanation": "L’IA peut aider à préparer une demande, mais elle ne remplace jamais la vérification humaine, locale et actualisée."}];
+const QUESTIONS_PER_ATTEMPT = 40;
+const PASS_SCORE = 30;
+
+let questions = [];
+let current = 0;
+let answers = {};
+let validated = {};
+let candidate = "";
+let org = "";
+let finalScore = 0;
+
+function shuffle(array) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML;
+}
+
+function startQuiz() {
+  candidate = document.getElementById("traineeName").value.trim();
+  org = document.getElementById("traineeOrg").value.trim();
+  if (!candidate || !org) {
+    alert("Merci de renseigner le nom/prénom et la structure avant de commencer.");
+    return;
+  }
+  questions = shuffle(QUESTION_BANK).slice(0, QUESTIONS_PER_ATTEMPT).map(q => ({
+    ...q,
+    options: shuffle(q.options)
+  }));
+  current = 0;
+  answers = {};
+  validated = {};
+  finalScore = 0;
+  document.getElementById("homeScreen").classList.add("hidden");
+  document.getElementById("resultScreen").style.display = "none";
+  document.getElementById("certificate").style.display = "none";
+  document.getElementById("quizScreen").classList.remove("hidden");
+  document.getElementById("candidatePill").textContent = candidate;
+  document.getElementById("orgPill").textContent = org;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById("counter").textContent = `Question ${current + 1} / ${questions.length}`;
+  document.getElementById("progress").style.width = `${((current + 1) / questions.length) * 100}%`;
+  document.getElementById("theme").textContent = q.theme;
+  document.getElementById("question").textContent = q.question;
+  document.getElementById("feedback").className = "feedback";
+  document.getElementById("feedback").style.display = "none";
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("nextBtn").disabled = true;
+  document.getElementById("validateBtn").disabled = false;
+  document.getElementById("nextBtn").textContent = current === questions.length - 1 ? "Voir le résultat" : "Question suivante";
+
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+  q.options.forEach((opt, idx) => {
+    const label = document.createElement("label");
+    label.className = "answer";
+    label.innerHTML = `<input type="radio" name="answer" value="${idx}">
+      <span><strong>${String.fromCharCode(65 + idx)}.</strong> ${escapeHtml(opt.text)}</span>`;
+    answersDiv.appendChild(label);
+  });
+}
+
+function validateAnswer() {
+  const q = questions[current];
+  const selectedInput = document.querySelector('input[name="answer"]:checked');
+  if (!selectedInput) {
+    alert("Merci de sélectionner une réponse.");
+    return;
+  }
+  const selected = Number(selectedInput.value);
+  answers[q.num] = selected;
+  validated[q.num] = true;
+
+  const ok = q.options[selected].correct;
+  const correctText = q.options.find(o => o.correct).text;
+  const fb = document.getElementById("feedback");
+  fb.className = ok ? "feedback ok" : "feedback bad";
+  fb.innerHTML = ok
+    ? `Bonne réponse.<span class="why">${escapeHtml(q.explanation)}</span>`
+    : `Mauvaise réponse. Réponse attendue : ${escapeHtml(correctText)}<span class="why">${escapeHtml(q.explanation)}</span>`;
+  fb.style.display = "block";
+
+  document.querySelectorAll('input[name="answer"]').forEach(i => i.disabled = true);
+  document.getElementById("validateBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextQuestion() {
+  if (current === questions.length - 1) finishQuiz();
+  else {
+    current++;
+    renderQuestion();
+  }
+}
+
+function finishQuiz() {
+  finalScore = 0;
+  questions.forEach(q => {
+    const selected = answers[q.num];
+    if (selected !== undefined && q.options[selected].correct) finalScore++;
+  });
+
+  const pct = Math.round(finalScore / questions.length * 100);
+  const passed = finalScore >= PASS_SCORE;
+
+  document.getElementById("quizScreen").classList.add("hidden");
+  document.getElementById("resultScreen").style.display = "block";
+  document.getElementById("score").textContent = `${finalScore} / ${questions.length} — ${pct} %`;
+  document.getElementById("message").innerHTML = passed
+    ? `<p class="passed">🎉 Félicitations, quiz validé !</p><p>Vous maîtrisez les principales règles d’accueil, de sécurité et de conseil aux visiteurs dans la Somme.</p>`
+    : `<p class="failed">Quiz non validé.</p><p>Objectif : obtenir au moins ${PASS_SCORE} bonnes réponses sur ${questions.length}. Une nouvelle tentative proposera une autre sélection de questions.</p>`;
+  document.getElementById("printBtn").style.display = passed ? "inline-flex" : "none";
+
+  document.getElementById("certName").textContent = candidate;
+  document.getElementById("certOrg").textContent = org;
+  document.getElementById("certScore").textContent = `${finalScore} / ${questions.length} — ${pct} %`;
+  document.getElementById("certDate").textContent = "Date : " + new Date().toLocaleDateString("fr-FR");
+  document.getElementById("certificate").style.display = passed ? "block" : "none";
+  document.getElementById("review").innerHTML = "";
+}
+
+function showReview() {
+  const review = document.getElementById("review");
+  review.innerHTML = "";
+  questions.forEach((q, idx) => {
+    const selected = answers[q.num];
+    const ok = selected !== undefined && q.options[selected].correct;
+    const correct = q.options.find(o => o.correct).text;
+    const userAnswer = selected !== undefined ? q.options[selected].text : "Aucune réponse";
+    const item = document.createElement("div");
+    item.className = "review-item " + (ok ? "ok" : "bad");
+    item.innerHTML = `<strong>${idx + 1}. ${escapeHtml(q.question)}</strong><br>
+      <span class="small">Thématique : ${escapeHtml(q.theme)}</span><br>
+      <span class="small">Réponse donnée : ${escapeHtml(userAnswer)}</span><br>
+      <span class="small">Bonne réponse : ${escapeHtml(correct)}</span><br>
+      <span class="small">Explication : ${escapeHtml(q.explanation)}</span>`;
+    review.appendChild(item);
+  });
+}
+
+function exportCSV() {
+  let rows = [["Nom", "Structure", "Date", "Score", "Question", "Thématique", "Réponse donnée", "Bonne réponse", "Résultat"]];
+  const date = new Date().toLocaleString("fr-FR");
+  questions.forEach(q => {
+    const selected = answers[q.num];
+    const ok = selected !== undefined && q.options[selected].correct;
+    const correct = q.options.find(o => o.correct).text;
+    const userAnswer = selected !== undefined ? q.options[selected].text : "Aucune réponse";
+    rows.push([candidate, org, date, `${finalScore}/${questions.length}`, q.question, q.theme, userAnswer, correct, ok ? "Bonne réponse" : "Mauvaise réponse"]);
+  });
+  const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"','""')}"`).join(";")).join("\n");
+  const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "resultats_quiz_saisonnier_somme.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function restart() {
+  document.getElementById("resultScreen").style.display = "none";
+  document.getElementById("certificate").style.display = "none";
+  startQuiz();
+}
+
+document.getElementById("beginBtn").addEventListener("click", startQuiz);
+document.getElementById("validateBtn").addEventListener("click", validateAnswer);
+document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+document.getElementById("reviewBtn").addEventListener("click", showReview);
+document.getElementById("csvBtn").addEventListener("click", exportCSV);
+document.getElementById("printBtn").addEventListener("click", () => window.print());
+document.getElementById("restartBtn").addEventListener("click", restart);
+</script>
+</body>
+</html>
